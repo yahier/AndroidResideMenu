@@ -1,23 +1,30 @@
 package com.special.ResideMenu;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.util.DisplayMetrics;
-import android.view.*;
+import android.util.Log;
+import android.view.GestureDetector;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+
 import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.animation.AnimatorSet;
 import com.nineoldandroids.animation.ObjectAnimator;
 import com.nineoldandroids.view.ViewHelper;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * User: special
@@ -33,7 +40,7 @@ public class ResideMenu extends FrameLayout{
     private static final int PRESSED_DOWN = 3;
     private static final int PRESSED_DONE = 4;
     private static final int PRESSED_MOVE_VERTICAL = 5;
-
+    
     private ImageView imageViewShadow;
     private ImageView imageViewBackground;
     private LinearLayout layoutLeftMenu;
@@ -54,8 +61,8 @@ public class ResideMenu extends FrameLayout{
     private float shadowAdjustScaleY;
     /** the view which don't want to intercept touch event */
     private List<View> ignoredViews;
-    private List<ResideMenuItem> leftMenuItems;
-    private List<ResideMenuItem> rightMenuItems;
+    private List<View> leftMenuItems;
+    private List<View> rightMenuItems;
     private DisplayMetrics displayMetrics = new DisplayMetrics();
     private OnMenuListener menuListener;
     private float lastRawX;
@@ -65,6 +72,7 @@ public class ResideMenu extends FrameLayout{
     private List<Integer> disabledSwipeDirection = new ArrayList<Integer>();
     //valid scale factor is between 0.0f and 1.0f.
     private float mScaleValue = 0.5f;
+    private float mHorizontalOffset = 0.5f;
 
     public ResideMenu(Context context) {
         super(context);
@@ -97,8 +105,8 @@ public class ResideMenu extends FrameLayout{
 
     private void initValue(Activity activity){
         this.activity   = activity;
-        leftMenuItems   = new ArrayList<ResideMenuItem>();
-        rightMenuItems  = new ArrayList<ResideMenuItem>();
+        leftMenuItems   = new ArrayList<View>();
+        rightMenuItems  = new ArrayList<View>();
         ignoredViews    = new ArrayList<View>();
         viewDecor = (ViewGroup) activity.getWindow().getDecorView();
         viewActivity = new TouchDisableView(this.activity);
@@ -146,23 +154,12 @@ public class ResideMenu extends FrameLayout{
     }
 
     /**
-     * add a single items to left menu;
-     *
-     * @param menuItem
-     */
-    @Deprecated
-    public void addMenuItem(ResideMenuItem menuItem){
-        this.leftMenuItems.add(menuItem);
-        layoutLeftMenu.addView(menuItem);
-    }
-
-    /**
      * add a single items;
      *
      * @param menuItem
      * @param direction
      */
-    public void addMenuItem(ResideMenuItem menuItem, int direction){
+    public void addMenuItem(View menuItem, int direction){
         if (direction == DIRECTION_LEFT){
             this.leftMenuItems.add(menuItem);
             layoutLeftMenu.addView(menuItem);
@@ -173,23 +170,12 @@ public class ResideMenu extends FrameLayout{
     }
 
     /**
-     * set the menu items by array list to left menu;
-     *
-     * @param menuItems
-     */
-    @Deprecated
-    public void setMenuItems(List<ResideMenuItem> menuItems){
-        this.leftMenuItems = menuItems;
-        rebuildMenu();
-    }
-
-    /**
      * set the menu items by array list;
      *
      * @param menuItems
      * @param direction
      */
-    public void setMenuItems(List<ResideMenuItem> menuItems, int direction){
+    public void setMenuItems(List<View> menuItems, int direction){
         if (direction == DIRECTION_LEFT)
             this.leftMenuItems = menuItems;
         else
@@ -207,21 +193,11 @@ public class ResideMenu extends FrameLayout{
     }
 
     /**
-     * get the left menu items;
-     *
-     * @return
-     */
-    @Deprecated
-    public List<ResideMenuItem> getMenuItems() {
-        return leftMenuItems;
-    }
-
-    /**
      * get the menu items;
      *
      * @return
      */
-    public List<ResideMenuItem> getMenuItems(int direction) {
+    public List<View> getMenuItems(int direction) {
         if ( direction == DIRECTION_LEFT)
             return leftMenuItems;
         else
@@ -287,11 +263,6 @@ public class ResideMenu extends FrameLayout{
         scaleUp_activity.start();
     }
 
-    @Deprecated
-    public void setDirectionDisable(int direction){
-        disabledSwipeDirection.add(direction);
-    }
-
     public void setSwipeDirectionDisable(int direction){
         disabledSwipeDirection.add(direction);
     }
@@ -305,19 +276,20 @@ public class ResideMenu extends FrameLayout{
         int screenWidth = getScreenWidth();
         float pivotX;
         float pivotY = getScreenHeight() * 0.5f;
-
         if (direction == DIRECTION_LEFT){
             scrollViewMenu = scrollViewLeftMenu;
-            pivotX  = screenWidth * 1.5f;
+            pivotX  = screenWidth * (1.0f+mHorizontalOffset*4);
         }else{
             scrollViewMenu = scrollViewRightMenu;
-            pivotX  = screenWidth * -0.5f;
+            pivotX  = screenWidth * -(mHorizontalOffset*4);
         }
-
+        Log.e("setScaleDirection", "screenWidth:"+screenWidth);
+        Log.e("setScaleDirection", "pivotX:"+pivotX);
         ViewHelper.setPivotX(viewActivity, pivotX);
         ViewHelper.setPivotY(viewActivity, pivotY);
         ViewHelper.setPivotX(imageViewShadow, pivotX);
         ViewHelper.setPivotY(imageViewShadow, pivotY);
+        
         scaleDirection = direction;
     }
 
@@ -579,7 +551,20 @@ public class ResideMenu extends FrameLayout{
         this.mScaleValue = scaleValue;
     }
 
-    public interface OnMenuListener{
+    public void setHorizontalOffset(float horizontalOffset) {
+		this.mHorizontalOffset = horizontalOffset;
+		View leftScrollView = (View)layoutLeftMenu.getParent();
+		ViewGroup.LayoutParams vlpl = leftScrollView.getLayoutParams();
+		int screenWidth = getScreenWidth();
+		vlpl.width = (int)(screenWidth*horizontalOffset);
+		leftScrollView.setLayoutParams(vlpl);
+		View rightScrollView = (View)layoutRightMenu.getParent();
+		ViewGroup.LayoutParams vlpR = rightScrollView.getLayoutParams();
+		vlpR.width = (int)(screenWidth*horizontalOffset);
+		rightScrollView.setLayoutParams(vlpR);
+	}
+
+	public interface OnMenuListener{
 
         /**
          * the method will call on the finished time of opening menu's animation.
