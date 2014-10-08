@@ -8,18 +8,14 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.util.DisplayMetrics;
-import android.util.Log;
-import android.view.GestureDetector;
-import android.view.LayoutInflater;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.FrameLayout;
-import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
+import android.widget.ImageView.ScaleType;
 
 import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.animation.AnimatorSet;
@@ -39,12 +35,9 @@ public class ResideMenu extends FrameLayout {
 	private static final int PRESSED_MOVE_VERTICAL = 5;
 
 	private ImageView imageViewShadow;
-	private ImageView imageViewBackground;
-	private LinearLayout layoutLeftMenu;
-	private LinearLayout layoutRightMenu;
-	private ScrollView scrollViewLeftMenu;
-	private ScrollView scrollViewRightMenu;
-	private ScrollView scrollViewMenu;
+	private View viewLeftMenu;
+	private View viewRightMenu;
+	private View viewMenu;
 	/** the activity that view attach to */
 	private Activity activity;
 	/** the decorview of the activity */
@@ -53,13 +46,10 @@ public class ResideMenu extends FrameLayout {
 	private TouchDisableView viewActivity;
 	/** the flag of menu open status */
 	private boolean isOpened;
-	private GestureDetector gestureDetector;
 	private float shadowAdjustScaleX;
 	private float shadowAdjustScaleY;
 	/** the view which don't want to intercept touch event */
 	private List<View> ignoredViews;
-	private List<View> leftMenuItems;
-	private List<View> rightMenuItems;
 	private DisplayMetrics displayMetrics = new DisplayMetrics();
 	private OnMenuListener menuListener;
 	private float lastRawX;
@@ -73,19 +63,11 @@ public class ResideMenu extends FrameLayout {
 
 	public ResideMenu(Context context) {
 		super(context);
-		initViews(context);
-	}
-
-	private void initViews(Context context) {
-		LayoutInflater inflater = (LayoutInflater) context
-				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		inflater.inflate(R.layout.residemenu, this);
-		scrollViewLeftMenu = (ScrollView) findViewById(R.id.sv_left_menu);
-		scrollViewRightMenu = (ScrollView) findViewById(R.id.sv_right_menu);
-		imageViewShadow = (ImageView) findViewById(R.id.iv_shadow);
-		layoutLeftMenu = (LinearLayout) findViewById(R.id.layout_left_menu);
-		layoutRightMenu = (LinearLayout) findViewById(R.id.layout_right_menu);
-		imageViewBackground = (ImageView) findViewById(R.id.iv_background);
+		imageViewShadow = new ImageView(context);
+		FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
+		imageViewShadow.setScaleType(ScaleType.FIT_XY);
+		addView(imageViewShadow, flp);
+		imageViewShadow.setVisibility(View.GONE);
 	}
 
 	/**
@@ -102,8 +84,6 @@ public class ResideMenu extends FrameLayout {
 
 	private void initValue(Activity activity) {
 		this.activity = activity;
-		leftMenuItems = new ArrayList<View>();
-		rightMenuItems = new ArrayList<View>();
 		ignoredViews = new ArrayList<View>();
 		viewDecor = (ViewGroup) activity.getWindow().getDecorView();
 		viewActivity = new TouchDisableView(this.activity);
@@ -112,10 +92,6 @@ public class ResideMenu extends FrameLayout {
 		viewDecor.removeViewAt(0);
 		viewActivity.setContent(mContent);
 		addView(viewActivity);
-
-		ViewGroup parent = (ViewGroup) scrollViewLeftMenu.getParent();
-		parent.removeView(scrollViewLeftMenu);
-		parent.removeView(scrollViewRightMenu);
 	}
 
 	private void setShadowAdjustScaleXByOrientation() {
@@ -135,7 +111,7 @@ public class ResideMenu extends FrameLayout {
 	 * @param imageResrouce
 	 */
 	public void setBackground(int imageResrouce) {
-		imageViewBackground.setImageResource(imageResrouce);
+		setBackgroundResource(imageResrouce);
 	}
 
 	/**
@@ -150,43 +126,18 @@ public class ResideMenu extends FrameLayout {
 			imageViewShadow.setImageBitmap(null);
 	}
 
-	/**
-	 * add a single items;
-	 * 
-	 * @param menuItem
-	 * @param direction
-	 */
-	public void addMenuItem(View menuItem, int direction) {
+	public void setMenuView(View menuItem, int direction) {
 		if (direction == DIRECTION_LEFT) {
-			this.leftMenuItems.add(menuItem);
-			layoutLeftMenu.addView(menuItem);
+			if (viewLeftMenu != null) {
+				removeView(viewLeftMenu);
+			}
+			this.viewLeftMenu = menuItem;
 		} else {
-			this.rightMenuItems.add(menuItem);
-			layoutRightMenu.addView(menuItem);
+			if (viewRightMenu != null) {
+				removeView(viewRightMenu);
+			}
+			this.viewRightMenu = menuItem;
 		}
-	}
-
-	/**
-	 * set the menu items by array list;
-	 * 
-	 * @param menuItems
-	 * @param direction
-	 */
-	public void setMenuItems(List<View> menuItems, int direction) {
-		if (direction == DIRECTION_LEFT)
-			this.leftMenuItems = menuItems;
-		else
-			this.rightMenuItems = menuItems;
-		rebuildMenu();
-	}
-
-	private void rebuildMenu() {
-		layoutLeftMenu.removeAllViews();
-		layoutRightMenu.removeAllViews();
-		for (int i = 0; i < leftMenuItems.size(); i++)
-			layoutLeftMenu.addView(leftMenuItems.get(i), i);
-		for (int i = 0; i < rightMenuItems.size(); i++)
-			layoutRightMenu.addView(rightMenuItems.get(i), i);
 	}
 
 	/**
@@ -194,11 +145,11 @@ public class ResideMenu extends FrameLayout {
 	 * 
 	 * @return
 	 */
-	public List<View> getMenuItems(int direction) {
+	public View getMenuView(int direction) {
 		if (direction == DIRECTION_LEFT)
-			return leftMenuItems;
+			return viewLeftMenu;
 		else
-			return rightMenuItems;
+			return viewRightMenu;
 	}
 
 	/**
@@ -229,7 +180,9 @@ public class ResideMenu extends FrameLayout {
 	 * show the reside menu;
 	 */
 	public void openMenu(int direction) {
-
+		if (isDisableDirection(direction)) {
+			return;
+		}
 		setScaleDirection(direction);
 
 		isOpened = true;
@@ -238,7 +191,7 @@ public class ResideMenu extends FrameLayout {
 		AnimatorSet scaleDown_shadow = buildScaleDownAnimation(imageViewShadow,
 				mScaleValue + shadowAdjustScaleX, mScaleValue
 						+ shadowAdjustScaleY);
-		AnimatorSet alpha_menu = buildMenuAnimation(scrollViewMenu, 1.0f);
+		AnimatorSet alpha_menu = buildMenuAnimation(viewMenu, 1.0f);
 		scaleDown_shadow.addListener(animationListener);
 		scaleDown_activity.playTogether(scaleDown_shadow);
 		scaleDown_activity.playTogether(alpha_menu);
@@ -255,7 +208,7 @@ public class ResideMenu extends FrameLayout {
 				1.0f, 1.0f);
 		AnimatorSet scaleUp_shadow = buildScaleUpAnimation(imageViewShadow,
 				1.0f, 1.0f);
-		AnimatorSet alpha_menu = buildMenuAnimation(scrollViewMenu, 0.0f);
+		AnimatorSet alpha_menu = buildMenuAnimation(viewMenu, 0.0f);
 		scaleUp_activity.addListener(animationListener);
 		scaleUp_activity.playTogether(scaleUp_shadow);
 		scaleUp_activity.playTogether(alpha_menu);
@@ -264,6 +217,11 @@ public class ResideMenu extends FrameLayout {
 
 	public void setSwipeDirectionDisable(int direction) {
 		disabledSwipeDirection.add(direction);
+	}
+	
+	private boolean isDisableDirection(int direction){
+		return (viewLeftMenu == null && direction == DIRECTION_LEFT)
+		|| (viewRightMenu == null && direction == DIRECTION_RIGHT);
 	}
 
 	private boolean isInDisableDirection(int direction) {
@@ -276,10 +234,10 @@ public class ResideMenu extends FrameLayout {
 		float pivotX;
 		float pivotY = getScreenHeight() * 0.5f;
 		if (direction == DIRECTION_LEFT) {
-			scrollViewMenu = scrollViewLeftMenu;
+			viewMenu = viewLeftMenu;
 			pivotX = screenWidth * (mHorizontalOffset / (1 - mScaleValue));
 		} else {
-			scrollViewMenu = scrollViewRightMenu;
+			viewMenu = viewRightMenu;
 			pivotX = screenWidth * (1 - mHorizontalOffset / (1 - mScaleValue));
 		}
 
@@ -450,11 +408,11 @@ public class ResideMenu extends FrameLayout {
 		float targetScale = 0;
 		int screenWidth = getScreenWidth();
 		if (scaleDirection == DIRECTION_LEFT) {
-			targetScale = -(currentRawX * (1-mScaleValue) - screenWidth
+			targetScale = -(currentRawX * (1 - mScaleValue) - screenWidth
 					* mHorizontalOffset)
 					/ (screenWidth * mHorizontalOffset);
 		} else {
-			targetScale = -((screenWidth - currentRawX) * (1-mScaleValue) - screenWidth
+			targetScale = -((screenWidth - currentRawX) * (1 - mScaleValue) - screenWidth
 					* mHorizontalOffset)
 					/ (screenWidth * mHorizontalOffset);
 		}
@@ -480,7 +438,7 @@ public class ResideMenu extends FrameLayout {
 			break;
 
 		case MotionEvent.ACTION_MOVE:
-			if (isInIgnoredView || isInDisableDirection(scaleDirection))
+			if (isInIgnoredView ||isDisableDirection(scaleDirection)|| isInDisableDirection(scaleDirection))
 				break;
 
 			if (pressedState != PRESSED_DOWN
@@ -510,7 +468,7 @@ public class ResideMenu extends FrameLayout {
 						+ shadowAdjustScaleX);
 				ViewHelper.setScaleY(imageViewShadow, targetScale
 						+ shadowAdjustScaleY);
-				ViewHelper.setAlpha(scrollViewMenu, (1 - targetScale) * 2.0f);
+				ViewHelper.setAlpha(viewMenu, (1 - targetScale) * 2.0f);
 
 				lastRawX = ev.getRawX();
 				return true;
@@ -564,15 +522,6 @@ public class ResideMenu extends FrameLayout {
 
 	public void setHorizontalOffset(float horizontalOffset) {
 		this.mHorizontalOffset = horizontalOffset;
-		View leftScrollView = (View) layoutLeftMenu.getParent();
-		ViewGroup.LayoutParams vlpl = leftScrollView.getLayoutParams();
-		int screenWidth = getScreenWidth();
-		vlpl.width = (int) (screenWidth * horizontalOffset);
-		leftScrollView.setLayoutParams(vlpl);
-		View rightScrollView = (View) layoutRightMenu.getParent();
-		ViewGroup.LayoutParams vlpR = rightScrollView.getLayoutParams();
-		vlpR.width = (int) (screenWidth * horizontalOffset);
-		rightScrollView.setLayoutParams(vlpR);
 	}
 
 	public interface OnMenuListener {
@@ -591,14 +540,16 @@ public class ResideMenu extends FrameLayout {
 	}
 
 	private void showScrollViewMenu() {
-		if (scrollViewMenu != null && scrollViewMenu.getParent() == null) {
-			addView(scrollViewMenu);
+		if (viewMenu != null && viewMenu.getParent() == null) {
+			FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams((int)(getScreenWidth()*mHorizontalOffset), FrameLayout.LayoutParams.MATCH_PARENT);
+			flp.gravity = scaleDirection==DIRECTION_LEFT?Gravity.LEFT:Gravity.RIGHT;
+			addView(viewMenu,flp);
 		}
 	}
 
 	private void hideScrollViewMenu() {
-		if (scrollViewMenu != null && scrollViewMenu.getParent() != null) {
-			removeView(scrollViewMenu);
+		if (viewMenu != null && viewMenu.getParent() != null) {
+			removeView(viewMenu);
 		}
 	}
 }

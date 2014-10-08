@@ -4,8 +4,10 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 import com.special.ResideMenu.ResideMenu;
 
@@ -38,7 +40,7 @@ public class MenuActivity extends FragmentActivity implements View.OnClickListen
         resideMenu.setMenuListener(menuListener);
         //valid scale factor is between 0.0f and 1.0f. leftmenu'width is 150dip. 
         resideMenu.setScaleValue(0.8f);
-        resideMenu.setHorizontalOffset(0.7f);
+        resideMenu.setHorizontalOffset(0.8f);
         // create menu items;
         itemHome     = new ResideMenuItem(this, R.drawable.icon_home,     "Home");
         itemProfile  = new ResideMenuItem(this, R.drawable.icon_profile,  "Profile");
@@ -49,14 +51,22 @@ public class MenuActivity extends FragmentActivity implements View.OnClickListen
         itemProfile.setOnClickListener(this);
         itemCalendar.setOnClickListener(this);
         itemSettings.setOnClickListener(this);
+        
+        LinearLayout leftView = new LinearLayout(this);
+        leftView.setOrientation(LinearLayout.VERTICAL);
+        leftView.setGravity(Gravity.CENTER);
+        leftView.addView(itemHome);
+        leftView.addView(itemProfile);
+        resideMenu.setMenuView(leftView, ResideMenu.DIRECTION_LEFT);
 
-        resideMenu.addMenuItem(itemHome, ResideMenu.DIRECTION_LEFT);
-        resideMenu.addMenuItem(itemProfile, ResideMenu.DIRECTION_LEFT);
-        resideMenu.addMenuItem(itemCalendar, ResideMenu.DIRECTION_RIGHT);
-        resideMenu.addMenuItem(itemSettings, ResideMenu.DIRECTION_RIGHT);
-
+        LinearLayout rightView = new LinearLayout(this);
+        rightView.setOrientation(LinearLayout.VERTICAL);
+        rightView.setGravity(Gravity.CENTER_VERTICAL|Gravity.RIGHT);
+        rightView.addView(itemCalendar);
+        rightView.addView(itemSettings);
+        resideMenu.setMenuView(rightView, ResideMenu.DIRECTION_RIGHT);
         // You can disable a direction by setting ->
-        // resideMenu.setSwipeDirectionDisable(ResideMenu.DIRECTION_RIGHT);
+//         resideMenu.setSwipeDirectionDisable(ResideMenu.DIRECTION_RIGHT);
 
         findViewById(R.id.title_bar_left_menu).setOnClickListener(new View.OnClickListener() {
             @Override
