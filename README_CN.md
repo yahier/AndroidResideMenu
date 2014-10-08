@@ -1,5 +1,11 @@
 #AndroidResideMenu
 
+在原作者基础上做了修改优化，去除了不必要的ResideMenuItem(一般都会自定义View)
+
+增加方法ResideMenu.setHorizontalOffset(float offset)
+用途：设置打开ResideMenu时主页面的偏移量
+
+另修改了手势缩放值的处理，
 ------
 
 ReisdeMenu 创意灵感来自于Dribbble[1][1]还有[2][2]，而这个是Android版的ResideMenu，在视觉效果上部分参考了[iOS版的RESideMenu][3]，并在此感谢以上作者的贡献。
