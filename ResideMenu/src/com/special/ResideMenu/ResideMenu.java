@@ -283,8 +283,7 @@ public class ResideMenu extends FrameLayout{
             scrollViewMenu = scrollViewRightMenu;
             pivotX  = screenWidth * -(mHorizontalOffset*4);
         }
-        Log.e("setScaleDirection", "screenWidth:"+screenWidth);
-        Log.e("setScaleDirection", "pivotX:"+pivotX);
+        
         ViewHelper.setPivotX(viewActivity, pivotX);
         ViewHelper.setPivotY(viewActivity, pivotY);
         ViewHelper.setPivotX(imageViewShadow, pivotX);
