@@ -278,10 +278,10 @@ public class ResideMenu extends FrameLayout{
         float pivotY = getScreenHeight() * 0.5f;
         if (direction == DIRECTION_LEFT){
             scrollViewMenu = scrollViewLeftMenu;
-            pivotX  = screenWidth * (1.0f+mHorizontalOffset*4);
+            pivotX  = screenWidth * (mHorizontalOffset/(1-mScaleValue));
         }else{
             scrollViewMenu = scrollViewRightMenu;
-            pivotX  = screenWidth * -(mHorizontalOffset*4);
+            pivotX  = screenWidth * (1-mHorizontalOffset/(1-mScaleValue));
         }
         
         ViewHelper.setPivotX(viewActivity, pivotX);
