@@ -8,7 +8,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
 import com.special.ResideMenu.ResideMenu;
-import com.special.ResideMenu.ResideMenuItem;
 
 public class MenuActivity extends FragmentActivity implements View.OnClickListener{
 
@@ -32,15 +31,14 @@ public class MenuActivity extends FragmentActivity implements View.OnClickListen
     }
 
     private void setUpMenu() {
-
         // attach to current activity;
         resideMenu = new ResideMenu(this);
         resideMenu.setBackground(R.drawable.menu_background);
         resideMenu.attachToActivity(this);
         resideMenu.setMenuListener(menuListener);
         //valid scale factor is between 0.0f and 1.0f. leftmenu'width is 150dip. 
-        resideMenu.setScaleValue(0.6f);
-
+        resideMenu.setScaleValue(0.8f);
+        resideMenu.setHorizontalOffset(0.7f);
         // create menu items;
         itemHome     = new ResideMenuItem(this, R.drawable.icon_home,     "Home");
         itemProfile  = new ResideMenuItem(this, R.drawable.icon_profile,  "Profile");
