@@ -39,7 +39,7 @@ public class MenuActivity extends FragmentActivity implements View.OnClickListen
         resideMenu.attachToActivity(this);
         resideMenu.setMenuListener(menuListener);
         //when setScaleValue as 1, it's just slidingMenu  
-        resideMenu.setScaleValue(1);
+        resideMenu.setScaleValue(0.8f);
         resideMenu.setHorizontalOffset(0.8f);
         // create menu items;
         itemHome     = new ResideMenuItem(this, R.drawable.icon_home,     "Home");
