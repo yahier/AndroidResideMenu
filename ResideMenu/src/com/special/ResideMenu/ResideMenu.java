@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Rect;
+import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -67,7 +68,7 @@ public class ResideMenu extends FrameLayout {
 		FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
 		imageViewShadow.setScaleType(ScaleType.FIT_XY);
 		addView(imageViewShadow, flp);
-		imageViewShadow.setVisibility(View.GONE);
+		imageViewShadow.setImageResource(R.drawable.shadow);
 	}
 
 	/**
@@ -97,11 +98,11 @@ public class ResideMenu extends FrameLayout {
 	private void setShadowAdjustScaleXByOrientation() {
 		int orientation = getResources().getConfiguration().orientation;
 		if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-			shadowAdjustScaleX = 0.034f;
+			shadowAdjustScaleX = 0.017f;
 			shadowAdjustScaleY = 0.12f;
 		} else if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-			shadowAdjustScaleX = 0.06f;
-			shadowAdjustScaleY = 0.07f;
+			shadowAdjustScaleX = 0.035f;
+			shadowAdjustScaleY = 0.08f;
 		}
 	}
 
@@ -485,12 +486,12 @@ public class ResideMenu extends FrameLayout {
 
 			pressedState = PRESSED_DONE;
 			if (isOpened()) {
-				if (currentActivityScaleX > 0.56f)
+				if (currentActivityScaleX > mScaleValue+(1-mScaleValue)/4)
 					closeMenu();
 				else
 					openMenu(scaleDirection);
 			} else {
-				if (currentActivityScaleX < 0.94f) {
+				if (currentActivityScaleX < 1-(1-mScaleValue)/4) {
 					openMenu(scaleDirection);
 				} else {
 					closeMenu();
@@ -516,11 +517,23 @@ public class ResideMenu extends FrameLayout {
 		return displayMetrics.widthPixels;
 	}
 
+	/**
+	 * 设定垂直缩放值，范围0.5-1
+	 * @param scaleValue
+	 */
 	public void setScaleValue(float scaleValue) {
+		scaleValue = scaleValue>0.999f?0.999f:scaleValue;
+		scaleValue = scaleValue<0.5f?0.5f:scaleValue;
 		this.mScaleValue = scaleValue;
 	}
 
+	/**
+	 * 设定水平偏移值，范围0.5-1
+	 * @param horizontalOffset
+	 */
 	public void setHorizontalOffset(float horizontalOffset) {
+		horizontalOffset = horizontalOffset>0.999f?0.999f:horizontalOffset;
+		horizontalOffset = horizontalOffset<0.5f?0.5f:horizontalOffset;
 		this.mHorizontalOffset = horizontalOffset;
 	}
 
@@ -552,4 +565,64 @@ public class ResideMenu extends FrameLayout {
 			removeView(viewMenu);
 		}
 	}
+}
+
+class TouchDisableView extends ViewGroup {
+
+    private View mContent;
+
+    //	private int mMode;
+    private boolean mTouchDisabled = false;
+
+    public TouchDisableView(Context context) {
+        this(context, null);
+    }
+
+    public TouchDisableView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+    }
+
+    public void setContent(View v) {
+        if (mContent != null) {
+            this.removeView(mContent);
+        }
+        mContent = v;
+        addView(mContent);
+    }
+
+    public View getContent() {
+        return mContent;
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+
+        int width = getDefaultSize(0, widthMeasureSpec);
+        int height = getDefaultSize(0, heightMeasureSpec);
+        setMeasuredDimension(width, height);
+
+        final int contentWidth = getChildMeasureSpec(widthMeasureSpec, 0, width);
+        final int contentHeight = getChildMeasureSpec(heightMeasureSpec, 0, height);
+        mContent.measure(contentWidth, contentHeight);
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        final int width = r - l;
+        final int height = b - t;
+        mContent.layout(0, 0, width, height);
+    }
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        return mTouchDisabled;
+    }
+
+    void setTouchDisable(boolean disableTouch) {
+        mTouchDisabled = disableTouch;
+    }
+
+    boolean isTouchDisabled() {
+        return mTouchDisabled;
+    }
 }
